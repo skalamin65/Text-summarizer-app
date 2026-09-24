@@ -1,0 +1,621 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+
+    <meta charset="UTF-8">
+
+    <meta name="viewport"
+          content="width=device-width, initial-scale=1.0">
+
+    <title>AI Text Summarizer</title>
+
+    <style>
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+
+        body {
+            font-family: Arial, Helvetica, sans-serif;
+            background: linear-gradient(
+                135deg,
+                #eef2ff,
+                #f8fafc
+            );
+            min-height: 100vh;
+            padding: 40px 20px;
+        }
+
+        .container {
+            max-width: 1100px;
+            margin: auto;
+        }
+
+        .header {
+            text-align: center;
+            margin-bottom: 35px;
+        }
+
+        .header h1 {
+            font-size: 42px;
+            color: #1e293b;
+            margin-bottom: 10px;
+        }
+
+        .header p {
+            font-size: 17px;
+            color: #64748b;
+        }
+
+        .main-card {
+            background: white;
+            border-radius: 20px;
+            padding: 30px;
+            box-shadow:
+                0 15px 40px rgba(0, 0, 0, 0.08);
+        }
+
+        .grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 25px;
+        }
+
+        .box {
+            display: flex;
+            flex-direction: column;
+        }
+
+        .box-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 12px;
+        }
+
+        .box-header h2 {
+            font-size: 20px;
+            color: #334155;
+        }
+
+        .counter {
+            font-size: 13px;
+            color: #64748b;
+        }
+
+        textarea {
+            width: 100%;
+            height: 400px;
+
+            resize: vertical;
+
+            border: 2px solid #e2e8f0;
+            border-radius: 14px;
+
+            padding: 18px;
+
+            font-size: 16px;
+            line-height: 1.6;
+
+            outline: none;
+
+            transition: 0.2s;
+        }
+
+        textarea:focus {
+            border-color: #6366f1;
+            box-shadow:
+                0 0 0 3px rgba(99, 102, 241, 0.1);
+        }
+
+        #summary {
+            background: #f8fafc;
+        }
+
+        .buttons {
+            display: flex;
+            gap: 12px;
+            margin-top: 15px;
+        }
+
+        button {
+            border: none;
+            border-radius: 10px;
+            padding: 13px 22px;
+            font-size: 15px;
+            cursor: pointer;
+            transition: 0.2s;
+        }
+
+        #summarizeBtn {
+            background: #6366f1;
+            color: white;
+            flex: 1;
+        }
+
+        #summarizeBtn:hover {
+            background: #4f46e5;
+        }
+
+        #summarizeBtn:disabled {
+            background: #a5b4fc;
+            cursor: not-allowed;
+        }
+
+        #clearBtn {
+            background: #e2e8f0;
+            color: #334155;
+        }
+
+        #clearBtn:hover {
+            background: #cbd5e1;
+        }
+
+        #copyBtn {
+            background: #10b981;
+            color: white;
+        }
+
+        #copyBtn:hover {
+            background: #059669;
+        }
+
+        .status {
+            margin-top: 18px;
+            text-align: center;
+            font-size: 15px;
+            color: #64748b;
+            min-height: 22px;
+        }
+
+        .loading {
+            display: none;
+            margin: 20px auto 0;
+            width: 35px;
+            height: 35px;
+            border: 4px solid #e2e8f0;
+            border-top: 4px solid #6366f1;
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+        }
+
+        @keyframes spin {
+
+            0% {
+                transform: rotate(0deg);
+            }
+
+            100% {
+                transform: rotate(360deg);
+            }
+
+        }
+
+        .footer {
+            text-align: center;
+            margin-top: 25px;
+            color: #94a3b8;
+            font-size: 14px;
+        }
+
+        @media (max-width: 800px) {
+
+            .grid {
+                grid-template-columns: 1fr;
+            }
+
+            .header h1 {
+                font-size: 32px;
+            }
+
+            textarea {
+                height: 300px;
+            }
+
+        }
+
+    </style>
+
+</head>
+
+
+<body>
+
+<div class="container">
+
+    <!-- Header -->
+
+    <div class="header">
+
+        <h1>AI Text Summarizer</h1>
+
+        <p>
+            Summarize long conversations and text using your
+            fine-tuned T5 model.
+        </p>
+
+    </div>
+
+
+    <!-- Main Card -->
+
+    <div class="main-card">
+
+        <div class="grid">
+
+
+            <!-- Input -->
+
+            <div class="box">
+
+                <div class="box-header">
+
+                    <h2>Input Text</h2>
+
+                    <span class="counter"
+                          id="charCount">
+                        0 characters
+                    </span>
+
+                </div>
+
+
+                <textarea
+                    id="dialogue"
+                    placeholder="Enter your dialogue or long text here..."></textarea>
+
+
+                <div class="buttons">
+
+                    <button
+                        id="summarizeBtn"
+                        onclick="summarizeText()">
+
+                        Summarize
+
+                    </button>
+
+
+                    <button
+                        id="clearBtn"
+                        onclick="clearText()">
+
+                        Clear
+
+                    </button>
+
+                </div>
+
+            </div>
+
+
+            <!-- Output -->
+
+            <div class="box">
+
+                <div class="box-header">
+
+                    <h2>Summary</h2>
+
+                    <span class="counter"
+                          id="summaryCount">
+                        0 characters
+                    </span>
+
+                </div>
+
+
+                <textarea
+                    id="summary"
+                    placeholder="Your summary will appear here..."
+                    readonly></textarea>
+
+
+                <div class="buttons">
+
+                    <button
+                        id="copyBtn"
+                        onclick="copySummary()">
+
+                        Copy Summary
+
+                    </button>
+
+                </div>
+
+            </div>
+
+        </div>
+
+
+        <!-- Loading -->
+
+        <div
+            class="loading"
+            id="loading">
+        </div>
+
+
+        <!-- Status -->
+
+        <div
+            class="status"
+            id="status">
+        </div>
+
+    </div>
+
+
+    <div class="footer">
+
+        Powered by FastAPI + Hugging Face T5 + PyTorch
+
+    </div>
+
+</div>
+
+
+<script>
+
+    // --------------------------------------------------
+    // Elements
+    // --------------------------------------------------
+
+    const dialogueInput =
+        document.getElementById("dialogue");
+
+    const summaryOutput =
+        document.getElementById("summary");
+
+    const charCount =
+        document.getElementById("charCount");
+
+    const summaryCount =
+        document.getElementById("summaryCount");
+
+    const status =
+        document.getElementById("status");
+
+    const loading =
+        document.getElementById("loading");
+
+    const summarizeBtn =
+        document.getElementById("summarizeBtn");
+
+
+    // --------------------------------------------------
+    // Character Counter
+    // --------------------------------------------------
+
+    dialogueInput.addEventListener(
+        "input",
+        function () {
+
+            const length =
+                dialogueInput.value.length;
+
+            charCount.textContent =
+                length + " characters";
+
+        }
+    );
+
+
+    // --------------------------------------------------
+    // Summarize
+    // --------------------------------------------------
+
+    async function summarizeText() {
+
+        const dialogue =
+            dialogueInput.value.trim();
+
+
+        // Check input
+
+        if (!dialogue) {
+
+            status.textContent =
+                "Please enter some text first.";
+
+            status.style.color = "#dc2626";
+
+            return;
+        }
+
+
+        // UI state
+
+        summarizeBtn.disabled = true;
+
+        loading.style.display = "block";
+
+        status.textContent =
+            "Generating summary...";
+
+        status.style.color = "#6366f1";
+
+        summaryOutput.value = "";
+
+
+        try {
+
+            // Send request to FastAPI
+
+            const response = await fetch(
+                "/summarize/",
+                {
+                    method: "POST",
+
+                    headers: {
+                        "Content-Type":
+                            "application/json"
+                    },
+
+                    body: JSON.stringify({
+
+                        // IMPORTANT:
+                        // Must match Pydantic model
+
+                        dialogue: dialogue
+
+                    })
+                }
+            );
+
+
+            // Check HTTP error
+
+            if (!response.ok) {
+
+                const errorText =
+                    await response.text();
+
+                throw new Error(
+                    "Server error: "
+                    + response.status
+                    + " "
+                    + errorText
+                );
+            }
+
+
+            // Convert response to JSON
+
+            const data =
+                await response.json();
+
+
+            // Check backend error
+
+            if (data.error) {
+
+                throw new Error(
+                    data.error
+                );
+            }
+
+
+            // Display summary
+
+            summaryOutput.value =
+                data.summary || "No summary generated.";
+
+
+            // Update counter
+
+            summaryCount.textContent =
+                summaryOutput.value.length
+                + " characters";
+
+
+            status.textContent =
+                "Summary generated successfully.";
+
+            status.style.color =
+                "#059669";
+
+
+        }
+
+        catch (error) {
+
+            console.error(error);
+
+            status.textContent =
+                "Error: " + error.message;
+
+            status.style.color =
+                "#dc2626";
+
+        }
+
+        finally {
+
+            summarizeBtn.disabled = false;
+
+            loading.style.display = "none";
+
+        }
+
+    }
+
+
+    // --------------------------------------------------
+    // Clear
+    // --------------------------------------------------
+
+    function clearText() {
+
+        dialogueInput.value = "";
+
+        summaryOutput.value = "";
+
+        charCount.textContent =
+            "0 characters";
+
+        summaryCount.textContent =
+            "0 characters";
+
+        status.textContent = "";
+
+    }
+
+
+    // --------------------------------------------------
+    // Copy Summary
+    // --------------------------------------------------
+
+    async function copySummary() {
+
+        const summary =
+            summaryOutput.value.trim();
+
+
+        if (!summary) {
+
+            status.textContent =
+                "There is no summary to copy.";
+
+            status.style.color =
+                "#dc2626";
+
+            return;
+
+        }
+
+
+        try {
+
+            await navigator.clipboard.writeText(
+                summary
+            );
+
+            status.textContent =
+                "Summary copied to clipboard.";
+
+            status.style.color =
+                "#059669";
+
+        }
+
+        catch (error) {
+
+            status.textContent =
+                "Could not copy summary.";
+
+            status.style.color =
+                "#dc2626";
+
+        }
+
+    }
+
+</script>
+
+</body>
+
+</html>
